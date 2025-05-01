@@ -1,48 +1,55 @@
-import pymongo
-from . import db
+from dataclasses import Field
+from typing import Any, List, Optional
+from bson import ObjectId
+from datetime import datetime
+from sqlalchemy import Column, Integer
+from sqlalchemy.types import JSON
+from sqlalchemy import Column, Integer, String , ARRAY
+from pydantic import BaseModel, Json, PostgresDsn, ValidationError, field_validator 
+from sqlalchemy.orm import relationship
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
+
+class User(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), index=True, nullable=False, unique=True)
+    client_id = db.Column(db.Integer, db.ForeignKey('clients.client_id'))
+    client = db.relationship('Client', back_populates='users')  # Changed to 'users'
+    recommendations = db.relationship('Recommendation', back_populates='user')
+
+class Client(db.Model):
+    __tablename__ = 'clients'
+    client_id = db.Column(db.Integer, primary_key=True, nullable=False, unique=True)
+    schema = db.Column(db.JSON)
+    users = db.relationship('User', back_populates='client')  # This is correct
+    coupons = db.relationship('Coupon', back_populates='client')
+
+class Coupon(db.Model):
+    __tablename__ = 'coupons'
+    coupon_id = db.Column(db.Integer, primary_key=True, nullable=False, unique=True)
+    coupon_name = db.Column(db.String(50))
+    client_id = db.Column(db.Integer, db.ForeignKey('clients.client_id'))
+    client = db.relationship('Client', back_populates='coupons')  # Fixed relationship
+    attributes = db.Column(db.JSON)
+
+class Event(db.Model):
+    __tablename__ = 'events'
+    event_id = db.Column(db.Integer, primary_key=True, nullable=False, unique=True)
+    event_name = db.Column(db.String(50))
+    event_type = db.Column(db.String(50))
+    event_group = db.Column(db.String(50))
+
+
+class Recommendation(db.Model):  # Changed to singular
+    __tablename__ = 'recommendations'
+    recommendation_id = db.Column(db.Integer, primary_key=True, nullable=False, unique=True)
+    recommendation_set = db.Column(db.ARRAY(db.JSON))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    user = db.relationship('User', back_populates='recommendations')
 
 
 
 
-client = pymongo.MongoClient("mongodb://localhost:27017/")  # Replace with your MongoDB URI
-db = client['my_project_db']  
-
-users = db['users']
-coupons = db['coupons']
-events = db['events']
-clients = db['clients']
-recommendations = db['recommendations']
-
-db.clients.insert_many({
-    "client_id" : "2003doom",
-    "client_name" : "atomic-wrengler",
-    "users" : 100
-})
-
-
-db.events.insert_many({
-
-})
-db.users.insert_many({
-      "user_id" : 
-       "2003coolkid"
-    ,
-    "username": "rafaelaster"
-},
-{
-      "user_id" : 
-       "kitten2090"
-    ,
-    "username": "falloutboy"
-},{
-    "user_id" : "russian2"
-    ,
-    "username": "amigo"
-})
-
-    # def __repr__(self):
-    #     return f'''Casino Recommendation(
-    #         game={self.game_type}, 
-    #         recommendation={self.recommendation}
-    #     )'''
-    
